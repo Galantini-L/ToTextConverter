@@ -1,0 +1,12 @@
+version: "1.0"
+services:
+  auth:
+    image: galantini00/auth_service_dev:latest
+    environment:
+      - MYSQL_USER:auth_user
+      - MYSQL_PASSWORD:Aauth123
+      - MYSQL_HOST:localhost
+      - MSQL_DB:auth
+      - JWT_SECRET:secretJWT
+    ports:
+      - 5000:50

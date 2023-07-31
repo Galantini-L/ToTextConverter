@@ -1,0 +1,5 @@
+microservice_diagram
+mongo_atlas
+src/auth/init.sql
+src/auth/venv
+src/getway/venv
