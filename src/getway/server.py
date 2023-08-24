@@ -58,16 +58,19 @@ def upload():
     access = json.loads(response)
 
     if access["admin"]:
-        if len(request.files) == 1:
-            for _,file in request.files:
-                # upload image to mongo and insert queue on AWS SQS
-                fid = utils.upload(file,fs_image,sqsChannel,access)
+        if len(request.files) != 1:
+            return "Required file is missing or more that one file is given.", 400
+        
+        for fileName,file in request.files.items():
+            # upload image to mongo and insert queue on AWS SQS
+            err = utils.upload(file,fs_image,sqsChannel,access)
+            print(f"--> format '{fileName}' uploaded by user {access['username']}")
 
-        try:
-            print(f"--> File: {request.files}\n--> File type: {len(request.files)}")
-            return "getting file from request"
-        except Exception as e: 
-            print(f"--> Can't get file from request\n--> Error: {e}")
+        if err:
+            return err
+        
+        return "Success upload!", 200
+        
 
 @server.route("/download", methods=["POST"])
 def download():
