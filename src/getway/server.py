@@ -1,5 +1,5 @@
 import os, pika, gridfs, json
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_pymongo import PyMongo
 from auth import access, validate
 from store import utils
@@ -24,20 +24,6 @@ try:
 except Exception as e:
     print (f"--> [*] ERROR: Error while connecting to mongodb\n \t[*] {e}")
 
-
-sqsChannel = None
-
-@server.route("/test", methods=["GET"])
-def testConnection():   
-    try: 
-        #isMongo = mongo_image.db.get_collection
-        #print ("=> [x] Result: %r" %isMongo)
-        return "True", 200
-    except Exception as e:
-        print(e)
-        return "False", 500
-    
-
 @server.route("/login", methods=["POST"])
 def login():
     token, err = access.login(request)
@@ -59,11 +45,11 @@ def upload():
 
     if access["admin"]:
         if len(request.files) != 1:
-            return "Required file is missing or more that one file is given.", 400
+            return "Required file is missing or more that one file was sent.", 400
         
         for fileName,file in request.files.items():
             # upload image to mongo and insert queue on AWS SQS
-            err = utils.upload(file,fs_image,sqsChannel,access)
+            err = utils.upload(file,fs_image,access)
             print(f"--> format '{fileName}' uploaded by user {access['username']}")
 
         if err:
@@ -74,7 +60,30 @@ def upload():
 
 @server.route("/download", methods=["POST"])
 def download():
-    pass
+
+    response, err = validate.token(request)
+    if err:
+        return err
+    
+    access = json.loads(response)
+    if access["admin"]:
+        fid_string = request.args.get("fid")
+
+        if not fid_string:
+            return "fid is missing", 400
+        
+        try:
+            out = fs_text.get(fid_string)
+
+            return send_file(out,download_name=f"{fid_string}.pdf")
+
+        except Exception as exc:
+            print(exc)
+            return "Internal server error", 400
+
+        
+    return "Not authorized", 400
+        
 
 if __name__ == "__main__":
     server.run(host="0.0.0.0", port=4000, debug= True)

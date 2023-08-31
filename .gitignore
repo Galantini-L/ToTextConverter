@@ -3,3 +3,5 @@ mongo_atlas
 src/auth/init.sql
 src/auth/venv
 src/getway/venv
+src/*/*/__pycache__/*
+src/getway/auth/__pycache__
